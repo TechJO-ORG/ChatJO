@@ -1,0 +1,61 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main   # deploy only on push to main branch
+  pull_request:
+    branches:
+      - main   # also run when a PR targets main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            rm -rf /var/www/backup-chat/*
+            mv /var/www/ChatJO/* /var/www/backup-chat
+            mkdir -p /var/www/ChatJO
+            # copy build artifacts to server
+            exit
+      - name: Upload build folder
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "build/*"
+          target: "/var/www/ChatJO"
+
+      - name: Move build folder
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            mv /var/www/html/ChatJO/* /var/www/ChatJO/
+            #rm -rf /var/www/ChatJO/build
+            # copy build artifacts to server
+            exit
