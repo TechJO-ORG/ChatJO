@@ -1,0 +1,63 @@
+services:
+  server:
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Amman
+      # Example: pass the URL (or read password from a secret file inside the app)
+      # MONGO_URL: mongodb://appuser:CHANGE_ME@db:27017/example?authSource=admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mongo:7
+    restart: always
+    environment:
+      TZ: Asia/Amman
+      # Root (admin) user via secrets
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo-root-username
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo-root-password
+      # App database name
+      MONGO_INITDB_DATABASE: example
+      # App creds passed to init script
+      MONGO_APP_USERNAME_FILE: /run/secrets/mongo-app-username
+      MONGO_APP_PASSWORD_FILE: /run/secrets/mongo-app-password
+    secrets:
+      - mongo-root-username
+      - mongo-root-password
+      - mongo-app-username
+      - mongo-app-password
+    volumes:
+      - mongo-data:/data/db
+      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    # expose to other services only; add 'ports: ["27017:27017"]' if you need host access
+    expose:
+      - "27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Optional limits (useful in dev)
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+volumes:
+  mongo-data:
+
+secrets:
+  mongo-root-username:
+    file: db/root-username.txt
+  mongo-root-password:
+    file: db/root-password.txt
+  mongo-app-username:
+    file: db/app-username.txt
+  mongo-app-password:
+    file: db/app-password.txt
