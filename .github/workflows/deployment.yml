@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            mv /var/www/html/ChatJO/* /var/www/ChatJO/
+            mv /var/www/ChatJO/build/* /var/www/ChatJO/
             #rm -rf /var/www/ChatJO/build
             # copy build artifacts to server
             exit
