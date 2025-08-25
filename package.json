@@ -1,0 +1,7 @@
+{
+  "name": "chatjo-root",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm install && npm run build"
+  }
+}
